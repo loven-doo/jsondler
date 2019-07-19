@@ -44,7 +44,7 @@ class JsonEntry(object, metaclass=ABCMeta):
         for attr in cls.attr_scheme():
             try:
                 json_entry.__dict__[attr] = reduce(getitem, cls.attr_scheme()[attr], in_dict)
-            except KeyError:
+            except (KeyError, TypeError):
                 print("WARNING: the path '%s' is absent in the input dict - cannot find a value for '%s'" %
                       (str(cls.attr_scheme()[attr]), attr))
                 continue
