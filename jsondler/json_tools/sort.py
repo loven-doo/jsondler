@@ -6,12 +6,15 @@ from jsondler.json_tools import get_by_path
 
 def sort_dicts_list(in_json, prior_list, reverse=False):
     paths_order = get_paths_order(in_json=in_json, prior_list=prior_list, reverse=reverse)
-    out_json = list()
-    in_json_copy = deepcopy(in_json)
-    for path in paths_order:
-        out_json.append(in_json_copy[path[0]])
-    [in_json_copy.pop(path[0]) for path in sorted(paths_order, key=lambda p: p[0], reverse=True)]
-    out_json.extend(in_json_copy)
+    reorder_dict = {path[0]: sorted_i for sorted_i, path in enumerate(paths_order)}
+    out_json = [None]*len(in_json)
+    not_sorted_i = len(reorder_dict)
+    for i, dict_i in enumerate(in_json):
+        try:
+            out_json[reorder_dict[i]] = deepcopy(dict_i)
+        except KeyError:
+            out_json[not_sorted_i] = deepcopy(dict_i)
+            not_sorted_i += 1
     return out_json
 
 
