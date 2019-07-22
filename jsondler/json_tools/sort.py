@@ -1,4 +1,5 @@
 import itertools
+from copy import deepcopy
 
 from jsondler.json_tools import get_by_path
 
@@ -6,10 +7,11 @@ from jsondler.json_tools import get_by_path
 def sort_dicts_list(in_json, prior_list, reverse=False):
     paths_order = get_paths_order(in_json=in_json, prior_list=prior_list, reverse=reverse)
     out_json = list()
+    in_json_copy = deepcopy(in_json)
     for path in paths_order:
-        out_json.append(in_json[path[0]])
-    [in_json.pop(path[0]) for path in sorted(paths_order, key=lambda p: p[0], reverse=True)]
-    out_json.__iadd__(in_json)
+        out_json.append(in_json_copy[path[0]])
+    [in_json_copy.pop(path[0]) for path in sorted(paths_order, key=lambda p: p[0], reverse=True)]
+    out_json.extend(in_json_copy)
     return out_json
 
 

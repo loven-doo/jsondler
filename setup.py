@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='jsondler',
-    version='0.0.2',
+    version='0.0.3',
     author="Denis Moshensky",
     author_email="loven7doo@gmail.com",  
     description="JSON handler for Python",
