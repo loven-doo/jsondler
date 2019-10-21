@@ -59,7 +59,3 @@ class DictsList(list):
         for key in self._ix:
             ix_dict[key] = DictsList([self[ix] for ix in self._ix[key]])
         return ix_dict
-
-
-class LinkedDictsList(DictsList):
-    pass

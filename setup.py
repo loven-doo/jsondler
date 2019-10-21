@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='jsondler',
-    version='0.0.4',
+    version='0.0.5',
     author="Denis Moshensky",
     author_email="loven7doo@gmail.com",  
     description="JSON handler for Python",
@@ -22,6 +22,7 @@ setup(
     install_requires=[
         'numpy >= 1.15.1',
         'pandas >= 0.23.4',
+        'psutil >= 5.6.1',
     ],
     entry_points={
         'console_scripts': []
