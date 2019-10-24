@@ -1,5 +1,5 @@
 import os
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 
 import numpy as np
 import psutil
@@ -19,10 +19,12 @@ class DataStructure(object):
         except TypeError:
             seq_l = 0
         num_items_blocks = seq_l // item_block_s + 1
-        shape = (num_items_blocks * item_block_s, *get_item_shape(item_struct))
+        self.item_shape, self.dtype, self.item_keys = self.parse_item_structure(item_struct=item_struct,
+                                                                                subitem_block_s=item_block_s)
+        shape = (num_items_blocks * item_block_s, *self.item_shape)
 
         if low_memory.lower() == 'auto':
-            needed_mem = 200 * np.prod(shape)
+            needed_mem = 2 * np.prod(shape)  # * sizeof(self.dtype)
             avail_mem = psutil.virtual_memory().available
             if needed_mem >= avail_mem:
                 low_memory = True
@@ -33,11 +35,45 @@ class DataStructure(object):
                 memmap_path = "ds_%s.memmap" % generate_random_string(10)
             if not os.path.exists(os.path.dirname(memmap_path)):
                 os.makedirs(os.path.dirname(memmap_path))
-            self.data_array = np.memmap()
+            self.data_array = np.memmap(filename=memmap_path, shape=shape, dtype=self.dtype)
         else:
-            self.data_array = np.zeros()
+            self.data_array = np.zeros(shape=shape, dtype=self.dtype)
 
-        # inner keys
+    def parse_item_structure(self, item_struct, subitem_block_s=1000):
+        item_shape = list()
+        dtype = None
+        item_keys = list()
+        if isinstance(item_struct, dict):
+            if len(item_struct) == 1 and "*" in item_struct:
+                item_shape.append(subitem_block_s)
+                item_keys.append(dict())
+                subitem_shape, dtype, subitem_keys = self.parse_item_structure(item_struct=item_struct["*"],
+                                                                               subitem_block_s=subitem_block_s)
+                item_shape.extend(subitem_shape)
+                item_keys.extend(subitem_keys)
+            else:
+                pass
+        elif isinstance(item_struct, list):
+            if len(item_struct) == 1:
+                item_shape.append(subitem_block_s)
+                item_keys.append(list())
+                subitem_shape, dtype, subitem_keys = self.parse_item_structure(item_struct=item_struct[0],
+                                                                               subitem_block_s=subitem_block_s)
+                item_shape.extend(subitem_shape)
+                item_keys.extend(subitem_keys)
+            else:
+                pass
+        else:
+            return item_shape, item_struct, item_keys
+        return tuple(item_shape), dtype, item_keys
+
+    @staticmethod
+    def get_item_struct(item):
+        if isinstance(item, dict):
+            pass
+        else:
+            pass
+        return
 
 
 class DataDict(DataStructure, AbstractDict):
@@ -50,7 +86,7 @@ class DataDict(DataStructure, AbstractDict):
         else:
             seq_items = seq
         if seq_items and item_struct is None:
-            item_struct = get_item_struct(item=seq_items[0][1])
+            item_struct = self.get_item_struct(item=seq_items[0][1])
 
         super(DataDict, self).__init__(seq=seq_items, item_struct=item_struct, item_block_s=item_block_s,
                                        low_memory=low_memory, memmap_path=memmap_path)
@@ -74,7 +110,14 @@ class DataDict(DataStructure, AbstractDict):
             yield key, self[key]
 
     def update(self, E=None, **F):
-        return
+        if hasattr(E, "keys"):
+            for k in E:
+                self[k] = E[k]
+        elif E:
+            for k, v in E:
+                self[k] = v
+        for k in F:
+            self[k] = F[k]
 
     def copy(self):
         return
@@ -115,13 +158,17 @@ class DataList(DataStructure, AbstractList):
 
     def __init__(self, seq=(), item_struct=None, item_block_s=100, low_memory='auto', memmap_path=None):
         if seq and item_struct is None:
-            item_struct = get_item_struct(item=seq[0])
+            item_struct = self.get_item_struct(item=seq[0])
 
         super(DataList, self).__init__(seq=seq, item_struct=item_struct, item_block_s=item_block_s,
                                        low_memory=low_memory, memmap_path=memmap_path)
 
+        self.ind_order = list()
+        i = 0
         for seq_i in seq:
             self.append(seq_i)
+            self.ind_order.append(i)
+            i += 1
 
     def append(self, p_object):
         pass
@@ -172,14 +219,25 @@ class DataList(DataStructure, AbstractList):
         pass
 
 
-def get_item_struct(item):
-    if isinstance(item, dict):
+class DataItem(object):
+
+    def __init__(self, data_structure, data_array_inds):
+        self.data_structure = data_structure
+        self.data_array_inds = data_array_inds
+
+    def pop(self, key_or_ind):
+        v = self.view()[key_or_ind]
+        del self[key_or_ind]
+        return v
+
+    def __getitem__(self, item):
+        return
+
+    def __setitem__(self, key, value):
         pass
-    else:
+
+    def __delitem__(self, key):
         pass
-    return
 
-
-def get_item_shape(item_struct):
-
-    return
+    def view(self):
+        return
