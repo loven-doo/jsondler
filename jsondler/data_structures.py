@@ -221,6 +221,8 @@ class DataList(DataStructure, AbstractList):
 
 class DataItem(object):
 
+    # All operations like append, insert, update rtc. work this way: view() -> modification -> __setitem__(...)
+
     def __init__(self, data_structure, data_array_inds):
         self.data_structure = data_structure
         self.data_array_inds = data_array_inds
